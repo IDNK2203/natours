@@ -23,9 +23,7 @@ const connect = async () => {
 connect();
 // fetch data from file sysytem
 
-const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/tours-simple.json`, 'utf-8')
-);
+const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours.json`, 'utf-8'));
 
 // import data to database
 const importData = async () => {

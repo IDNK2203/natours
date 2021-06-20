@@ -12,21 +12,36 @@ const createToken = userId => {
   });
 };
 
+const sendTokenAndResData = async (res, statusCode, user) => {
+  const token = await createToken(user.id);
+
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.COOKIE_EXPIRY_DATE * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true
+  };
+
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  res.cookie('jwt', token, cookieOptions);
+
+  user.password = undefined;
+  res.status(statusCode).json({
+    status: 'sucess',
+    token,
+    user
+  });
+};
+
 exports.signup = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm
-    // role: req.body.role
   });
 
-  const token = await createToken(newUser.id);
-  res.status(201).json({
-    status: 'sucess',
-    token,
-    user: newUser
-  });
+  sendTokenAndResData(res, 201, newUser);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -37,15 +52,14 @@ exports.login = catchAsync(async (req, res, next) => {
 
   const user = await User.findOne({ email: email }).select('+password');
 
-  if (!user || !(await user.passwordCheck(password, user.password))) {
+  if (!user) {
+    return next(new AppError('This user does not exist', 401));
+  }
+  if (!(await user.passwordCheck(password, user.password))) {
     return next(new AppError('incorrect email or password', 401));
   }
 
-  const token = await createToken(user.id);
-  res.status(201).json({
-    status: 'sucess',
-    token
-  });
+  sendTokenAndResData(res, 201, user);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -83,6 +97,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     return next(new AppError('This user no longer exists', 401));
   // if password was changed after user login in (suspicious behaviour) user has to login again
   if (incomingUser.updatePasswordAtCheck(decodedPayload.iat))
+    //change your account access key after resource access key was created
     return next(
       new AppError(' please log in again to  view this resource', 401)
     );
@@ -174,9 +189,28 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   // update passwordUpdateAt to current time
 
   // login user
-  const token = await createToken(user.id);
-  res.status(201).json({
-    status: 'sucess',
-    token
-  });
+  sendTokenAndResData(res, 201, user);
 });
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // steps
+
+  // 1)confirm user password
+  const loginUser = await User.findOne({ _id: req.user.id }).select(
+    '+password'
+  );
+
+  if (!(await loginUser.passwordCheck(req.body.password, loginUser.password)))
+    return next(
+      new AppError('please provide your correct current password', 401)
+    );
+
+  //set new password
+  loginUser.password = req.body.newPassword;
+  loginUser.passwordConfirm = req.body.newPasswordConfirm;
+  await loginUser.save();
+
+  sendTokenAndResData(res, 201, loginUser);
+});
+
+// send mutated user data back to client or delete password key value pair

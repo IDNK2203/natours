@@ -40,10 +40,21 @@ const userSchema = new mongoose.Schema({
       message: 'confirm your password'
     }
   },
+  active: {
+    type: Boolean,
+    default: true,
+    select: false
+  },
   passwordResetToken: String,
   tokenExpiresAt: Date,
   updatePasswordAt: Date,
   photo: String
+});
+
+userSchema.pre(/^find/, function(next) {
+  this.find({ active: { $ne: false } });
+
+  next();
 });
 
 userSchema.pre('save', async function(next) {

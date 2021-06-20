@@ -5,8 +5,15 @@ const authController = require('../controllers/authControllers');
 
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
-router.post('/forgotPassword', authController.forgotPassword);
-router.patch('/resetPassword/:token', authController.resetPassword);
+router.post('/forgotpassword', authController.forgotPassword);
+router.patch('/resetpassword/:token', authController.resetPassword);
+router.patch(
+  '/updatepassword',
+  authController.protect,
+  authController.updatePassword
+);
+router.patch('/updateme', authController.protect, userController.updateMe);
+router.delete('/deleteme', authController.protect, userController.deleteMe);
 
 router
   .route('/')
@@ -15,7 +22,7 @@ router
 router
   .route('/:id')
   .get(userController.getUser)
-  .delete(userController.deleteUser)
-  .patch(userController.updateUser);
+  .delete(authController.protect, userController.deleteUser);
+// .patch(authController.protect, userController.updateUser);
 
 module.exports = router;
