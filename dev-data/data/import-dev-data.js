@@ -1,6 +1,8 @@
 const fs = require('fs');
 const mongoose = require('mongoose');
 const Tour = require('../../models/tour');
+const User = require('../../models/user');
+const Review = require('../../models/review');
 
 const connect = async () => {
   try {
@@ -24,11 +26,17 @@ connect();
 // fetch data from file sysytem
 
 const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours.json`, 'utf-8'));
+const users = JSON.parse(fs.readFileSync(`${__dirname}/users.json`, 'utf-8'));
+const reviews = JSON.parse(
+  fs.readFileSync(`${__dirname}/reviews.json`, 'utf-8')
+);
 
 // import data to database
 const importData = async () => {
   try {
     await Tour.create(tours);
+    await User.create(users, { validateBeforeSave: false });
+    await Review.create(reviews);
     console.log('tours imported');
   } catch (error) {
     console.log(error);
@@ -40,6 +48,10 @@ const deleteData = async () => {
   try {
     await Tour.deleteMany();
     console.log('tours deleted');
+    await Review.deleteMany();
+    console.log('reviews deleted');
+    await User.deleteMany();
+    console.log('users deleted');
   } catch (error) {
     console.log(error);
   }

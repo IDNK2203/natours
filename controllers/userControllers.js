@@ -1,6 +1,7 @@
 const User = require('./../models/user');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const factoryController = require('../controllers/factoryControllers');
 
 const filteredUserData = (sentData, ...neededFields) => {
   const obj = {};
@@ -11,6 +12,13 @@ const filteredUserData = (sentData, ...neededFields) => {
   });
   return obj;
 };
+
+exports.setUserId = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
+
+exports.getMe = factoryController.getOne(User);
 
 exports.updateMe = catchAsync(async (req, res, next) => {
   // steps
@@ -65,62 +73,8 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
 });
 
 // @ Users Controllers
-exports.getAllUser = async (req, res) => {
-  try {
-    const users = await User.find();
-    res.status(200).json({
-      status: 'sucess',
-      users
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'this route is not yet defined',
-      error
-    });
-  }
-};
-
-exports.createNewUser = async (req, res) => {
-  try {
-    res.status(500).json({
-      status: 'error',
-      message: 'this route is not yet defined'
-    });
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-exports.getUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'this route is not yet defined'
-  });
-};
-
-// exports.updateUser = catchAsync(async (req, res, next) => {
-//   // steps
-//   // 1 check data sent to be updated
-//   // 2 update valid data onlt
-//   // 3 purify user data to be sent back
-//   // 4 send back user data
-
-//   if (req.body.password) {
-//     return next(
-//       new AppError(`This route does not update password pls visit this route`)
-//     );
-//   }
-
-//   res.status(500).json({
-//     status: 'error',
-//     message: 'this route is not yet defined'
-//   });
-// });
-
-exports.deleteUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'this route is not yet defined'
-  });
-};
+exports.createNewUser = factoryController.createOne(User);
+exports.getAllUser = factoryController.getAll(User);
+exports.getUser = factoryController.getOne(User);
+exports.deleteUser = factoryController.deleteOne(User);
+exports.updateUser = factoryController.updateOne(User);

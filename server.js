@@ -20,7 +20,6 @@ const server = app.listen(port, () => {
 
 // if (app.get('env') === 'production') {
 process.on('unhandledRejection', err => {
-  // console.log(err.name, err.message);
   console.log(err);
 
   console.log('UNHANDLED REJECTION! 💥 Shutting down...');

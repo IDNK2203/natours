@@ -27,7 +27,7 @@ const sendTokenAndResData = async (res, statusCode, user) => {
 
   user.password = undefined;
   res.status(statusCode).json({
-    status: 'sucess',
+    status: 'success',
     token,
     user
   });
@@ -38,6 +38,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
+    role: req.body.role,
     passwordConfirm: req.body.passwordConfirm
   });
 
@@ -46,6 +47,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { password, email } = req.body;
+
   if (!email || !password) {
     return next(new AppError('please provide your email and passowrd', 400));
   }
@@ -62,6 +64,57 @@ exports.login = catchAsync(async (req, res, next) => {
   sendTokenAndResData(res, 201, user);
 });
 
+// protect route mdw
+// check incoming request , if valid expose user object
+
+// Login template features
+// login specfic content. by expoesing user data to template
+
+exports.logout = (req, res, next) => {
+  const cookieOptions = {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true
+  };
+
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  res.cookie('jwt', 'loggedout', cookieOptions);
+
+  res.status(200).json({
+    meassge: 'user logged out',
+    status: 'success'
+  });
+};
+
+exports.isLoggedIn = async (req, res, next) => {
+  let token;
+  try {
+    if (req.cookies.jwt) {
+      token = req.cookies.jwt;
+
+      const decodedPayload = await promisify(jwt.verify)(
+        token,
+        process.env.JWT_SECRET
+      );
+
+      const incomingUser = await User.findById(decodedPayload.id);
+      if (!incomingUser) {
+        return next();
+      }
+
+      if (incomingUser.updatePasswordAtCheck(decodedPayload.iat)) {
+        return next();
+      }
+
+      res.locals.user = incomingUser;
+      return next();
+    }
+  } catch (error) {
+    return next();
+  }
+
+  next();
+};
+
 exports.protect = catchAsync(async (req, res, next) => {
   // 1 check if token exist
   let token;
@@ -70,8 +123,10 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
-  // console.log(token);
+
   if (!token) {
     return next(
       new AppError(
