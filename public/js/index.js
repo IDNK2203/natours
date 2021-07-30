@@ -3,7 +3,6 @@
 import '@babel/polyfill';
 import { login, logout } from './login';
 
-console.log('in there chilling');
 const loginForm = document.querySelector('.form');
 const logoutBtn = document.querySelector('.nav__el.nav__el--logout');
 
