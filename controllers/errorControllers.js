@@ -1,7 +1,7 @@
 const AppError = require('./../utils/appError');
 
 const sendDevErrors = (err, req, res) => {
-  if (req.originalUrl.startsWith('api')) {
+  if (req.originalUrl.startsWith('/api')) {
     return res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
@@ -30,7 +30,6 @@ const prodApiErr = (err, req, res) => {
 };
 
 const ProdSrrErr = (err, req, res) => {
-  console.log(err.message, err.isOperational);
   if (err.isOperational) {
     return res.status(err.statusCode).render('error', {
       title: 'Error page',
@@ -45,7 +44,7 @@ const ProdSrrErr = (err, req, res) => {
 };
 
 const sendProdErrors = (err, req, res) => {
-  if (req.originalUrl.startsWith('api')) {
+  if (req.originalUrl.startsWith('/api')) {
     return prodApiErr(err, req, res);
   }
   ProdSrrErr(err, req, res);
@@ -86,7 +85,6 @@ const expiredTokenError = () => {
 };
 
 module.exports = (err, req, res, next) => {
-  // console.log(err);
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 

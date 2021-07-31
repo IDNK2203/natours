@@ -13,11 +13,6 @@ const filteredUserData = (sentData, ...neededFields) => {
   return obj;
 };
 
-exports.setUserId = (req, res, next) => {
-  req.params.id = req.user.id;
-  next();
-};
-
 exports.getMe = factoryController.getOne(User);
 
 exports.updateMe = catchAsync(async (req, res, next) => {

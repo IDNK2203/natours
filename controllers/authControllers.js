@@ -130,7 +130,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   if (!token) {
     return next(
       new AppError(
-        'you are not loged in please log in to view this resource',
+        'you are not logged in please log in to view this resource',
         401
       )
     );
@@ -144,13 +144,13 @@ exports.protect = catchAsync(async (req, res, next) => {
     token,
     process.env.JWT_SECRET
   );
-
   // check if user still exist
   const incomingUser = await User.findById(decodedPayload.id);
   // console.log(incomingUser);
   if (!incomingUser)
     return next(new AppError('This user no longer exists', 401));
   // if password was changed after user login in (suspicious behaviour) user has to login again
+  // summary a jwt has to be issued after password change
   if (incomingUser.updatePasswordAtCheck(decodedPayload.iat))
     //change your account access key after resource access key was created
     return next(
